@@ -226,6 +226,13 @@ func (pb PrimaryBuilderFactory) primaryBuilderInvocation(config Config) bootstra
 
 	commonArgs = append(commonArgs, "-l", filepath.Join(pb.config.FileListDir(), "Android.bp.list"))
 	invocationEnv := make(map[string]string)
+	// The primary builder runs under env -i. Preserve explicit Go GC limits so
+	// hosts with limited RAM can generate the graph without exhausting swap.
+	for _, key := range []string{"GOMEMLIMIT", "GOGC"} {
+		if value := os.Getenv(key); value != "" {
+			invocationEnv[key] = value
+		}
+	}
 	if pb.debugPort != "" {
 		//debug mode
 		commonArgs = append(commonArgs, "--delve_listen", pb.debugPort,
